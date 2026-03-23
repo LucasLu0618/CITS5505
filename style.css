@@ -1,0 +1,359 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Poppins', sans-serif;
+}
+
+body {
+  background: #ffffff;
+  line-height: 1.6;
+}
+
+/* Navbar */
+.navbar {
+  background: #4695d5;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 50px;
+}
+
+.logo {
+  font-size: 26px;
+  font-weight: bold;
+  background: #ffffff;
+  color: #7cc6fe;
+  padding: 8px 18px;
+  border-radius: 20px;
+  box-shadow: 0 4px 10px rgba(255, 255, 255, 0.1);
+}
+
+.nav-links {
+  list-style: none;
+  display: flex;
+  gap: 25px;
+}
+
+.nav-links a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.nav-links a:hover {
+  color: #ffeb3b;
+}
+
+/* Hero Section */
+.hero {
+  background: #ffffff;
+  padding: 100px 20px;
+  text-align: center;
+}
+
+.hero-center {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero h1 {
+  font-size: 52px;
+  color: #3a6ea5;
+  margin-bottom: 20px;
+}
+
+.hero p {
+  font-size: 22px;
+  color: #666;
+  margin-bottom: 30px;
+  line-height: 1.8;
+}
+
+.hero-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  text-decoration: none;
+  padding: 14px 28px;
+  border-radius: 999px;
+  font-weight: bold;
+  font-size: 16px;
+  display: inline-block;
+}
+
+.btn-pink {
+  background: #ff9eb5;
+  color: white;
+}
+
+.btn-green {
+  background: #8dd9a0;
+  color: white;
+}
+
+.btn-pink:hover {
+  background: #ff89a4;
+}
+
+.btn-green:hover {
+  background: #78cc8d;
+}
+
+/* Section General */
+section {
+  padding: 60px 50px;
+  text-align: center;
+}
+
+section h2 {
+  font-size: 34px;
+  margin-bottom: 35px;
+  color: #3a6ea5;
+}
+
+/* Cards */
+.card-container {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.card {
+  background: #fff6f5;
+  width: 280px;
+  padding: 25px;
+  border-radius: 20px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  transition: 0.3s;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+}
+
+.card h3 {
+  color: #ff8fab;
+  margin-bottom: 15px;
+  font-size: 22px;
+}
+
+.card p {
+  color: #666;
+  font-size: 16px;
+}
+
+/* Footer */
+.footer {
+  background: #a7d8ff;
+  color: white;
+  text-align: center;
+  padding: 18px;
+  font-size: 16px;
+}
+
+/* word style */
+.gradient-text {
+  background: linear-gradient(45deg, #7cc6fe, #ff9eb5, #8dd9a0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: 1px;
+}
+
+/* subtitle style */
+.hero-subtitle {
+  font-size: 22px;
+  color: #5f6c7b;
+  line-height: 1.8;
+  max-width: 700px;
+  margin: 0 auto 30px;
+}
+
+.hero-subtitle span {
+  color: #ff9eb5;
+  font-weight: bold;
+}
+
+
+/* login & register !!!!!!!!!!!!!! */
+/*logo login*/
+.logo a {
+  text-decoration: none;
+  color: #7cc6fe;
+}
+
+/* Login Page */
+.login-page {
+  min-height: calc(100vh - 140px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+.login-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 480px;
+  padding: 40px 35px;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.login-card h1 {
+  font-size: 42px;
+  margin-bottom: 10px;
+}
+
+.login-subtitle {
+  font-size: 18px;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.login-form {
+  text-align: left;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 16px;
+  font-weight: 700;
+  color: #3a6ea5;
+  margin-bottom: 8px;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e8eef5;
+  border-radius: 14px;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s;
+  font-family: 'Nunito', sans-serif;
+}
+
+.form-group input:focus {
+  border-color: #7cc6fe;
+  box-shadow: 0 0 0 4px rgba(124, 198, 254, 0.15);
+}
+
+.form-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.remember-me {
+  font-size: 15px;
+  color: #666;
+}
+
+.remember-me input {
+  margin-right: 6px;
+}
+
+.forgot-link {
+  font-size: 15px;
+  text-decoration: none;
+  color: #ff8fab;
+  font-weight: 700;
+}
+
+.forgot-link:hover {
+  text-decoration: underline;
+}
+
+.login-btn {
+  width: 100%;
+  border: none;
+  cursor: pointer;
+  font-family: 'Nunito', sans-serif;
+}
+
+.register-link {
+  margin-top: 20px;
+  font-size: 16px;
+  color: #666;
+}
+
+.register-link a {
+  color: #3a6ea5;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.register-link a:hover {
+  text-decoration: underline;
+}
+
+/* courses !!!!!!!!!!!!!! */
+/* Hero subtitle */
+.hero-subtitle {
+  font-size: 20px;
+  color: #5f6c7b;
+  line-height: 1.8;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.hero-subtitle span {
+  color: #ff9eb5;
+  font-weight: bold;
+}
+
+/* Courses Page */
+.courses-page {
+  padding: 0px 50px 80px;
+  text-align: center;
+}
+
+.course-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 260px;
+}
+
+.course-card .btn {
+  margin-top: 20px;
+  align-self: center;
+}
+
+/* index showcase*/
+.card h3 a {
+  text-decoration: none;
+  color: #ff8fab;
+}
+
+.card h3 a:hover {
+  color: #ff6f91;
+}
+
+/* showcase!!!!!!!!!!!!!!!!*/
+.showcase-page {
+  padding: 0px 50px 80px;
+  text-align: center;
+}
