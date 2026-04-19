@@ -1,0 +1,20 @@
+from flask import Flask
+from database import db, User, Course
+
+app = Flask(__name__)
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///kidcode.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db.init_app(app)
+
+with app.app_context():
+    users = User.query.all()
+    courses = Course.query.all()
+
+    print("Users:")
+    for user in users:
+        print(user.id, user.username, user.email, user.role)
+
+    print("\nCourses:")
+    for course in courses:
+        print(course.id, course.title, course.description, course.teacher_id)

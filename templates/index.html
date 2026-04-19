@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>KidCode Hub</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -14,11 +14,11 @@
     <div class="logo">KidCode Hub</div>
     <nav>
       <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="courses.html">Courses</a></li>
-        <li><a href="showcase.html">Showcase</a></li>
-        <li><a href="login.html">Login</a></li>
-        <li><a href="register.html">Register</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
       </ul>
     </nav>
   </header>
@@ -26,6 +26,11 @@
   <!-- Hero Section -->
 <section class="hero">
   <div class="hero-center">
+    {% if session.get("username") %}
+  <div class="welcome-badge">
+    Welcome back, <span>{{ session["username"] }}</span>!
+  </div>
+{% endif %}
     <h1 class="gradient-text">Welcome to KidCode Hub</h1>
     <p class="hero-subtitle">
       A fun and friendly place for children to <br>
@@ -33,9 +38,10 @@
     </p>
 
     <div class="hero-buttons">
-      <a href="register.html" class="btn btn-pink">Get Started</a>
-      <a href="courses.html" class="btn btn-green">View Courses</a>
+      <a href="/register" class="btn btn-pink">Get Started</a>
+      <a href="/courses" class="btn btn-green">View Courses</a>
     </div>
+    
   </div>
 </section>
 
@@ -60,22 +66,16 @@
 
   <!-- Courses -->
   <section class="courses">
-    <h2 class="gradient-text">Popular Courses</h2>
-    <div class="card-container">
+  <h2 class="gradient-text">Popular Courses</h2>
+  <div class="card-container">
+    {% for course in courses %}
       <div class="card">
-        <h3>aaaaaaaa</h3>
-        <p>aaaaaaaa</p>
+        <h3>{{ course.title }}</h3>
+        <p>{{ course.description }}</p>
       </div>
-      <div class="card">
-        <h3>aaaaaaaa</h3>
-        <p>aaaaaaaa</p>
-      </div>
-      <div class="card">
-        <h3>aaaaaaaa</h3>
-        <p>aaaaaaaa</p>
-      </div>
-    </div>
-  </section>
+    {% endfor %}
+  </div>
+</section>
 
   <!-- Showcase -->
   <section class="showcase">
