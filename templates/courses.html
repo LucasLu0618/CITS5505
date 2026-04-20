@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Courses - KidCode Hub</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -12,15 +12,15 @@
   <!-- Navigation Bar -->
   <header class="navbar">
     <div class="logo">
-      <a href="index.html">KidCode Hub</a>
+      <a href="/">KidCode Hub</a>
     </div>
     <nav>
       <ul class="nav-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="courses.html">Courses</a></li>
-        <li><a href="showcase.html">Showcase</a></li>
-        <li><a href="login.html">Login</a></li>
-        <li><a href="register.html">Register</a></li>
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        <li><a href="/login">Login</a></li>
+        <li><a href="/register">Register</a></li>
       </ul>
     </nav>
   </header>
@@ -42,25 +42,15 @@
     <section class="courses-page">
       <h2 class="gradient-text">Popular Courses</h2>
 
-      <div class="card-container">
-        <div class="card course-card">
-          <h3>aaaaaa</h3>
-          <p>aaaaaaaaa</p>
-          <a href="#" class="btn btn-pink">View Details</a>
+        <div class="card-container">
+          {% for course in courses %}
+            <div class="card course-card">
+              <h3>{{ course.title }}</h3>
+              <p>{{ course.description }}</p>
+              <a href="#" class="btn btn-pink">View Details</a>
+            </div>
+          {% endfor %}
         </div>
-
-        <div class="card course-card">
-          <h3>aaaaaaaa</h3>
-          <p>aaaaaaaaa</p>
-          <a href="#" class="btn btn-green">View Details</a>
-        </div>
-
-        <div class="card course-card">
-          <h3>aaaaaaaa</h3>
-          <p>aaaaaaaaa</p>
-          <a href="#" class="btn btn-pink">View Details</a>
-        </div>
-      </div>
     </section>
   </main>
 
