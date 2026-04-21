@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teacher Profile - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Profile header -->
+    <section class="hero">
+      <div class="hero-center">
+        <h1 class="gradient-text">Teacher Profile</h1>
+        <p class="hero-subtitle">
+          Welcome back, <span>{{ user.username }}</span>! Manage your
+          <span>courses</span>, <span>assignments</span>, and <span>student work</span> in one place.
+        </p>
+      </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="profile-flash-section">
+          {% for category, msg in messages %}
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">{{ msg }}</p>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Basic info -->
+    <section class="profile-section">
+      <h2 class="gradient-text">Account Information</h2>
+      <div class="profile-card">
+        <div class="profile-row"><span class="profile-label">Username</span><span class="profile-value">{{ user.username }}</span></div>
+        <div class="profile-row"><span class="profile-label">Email</span><span class="profile-value">{{ user.email }}</span></div>
+        <div class="profile-row"><span class="profile-label">Role</span><span class="profile-value role-pill role-teacher">Teacher</span></div>
+        <div class="profile-row"><span class="profile-label">Joined</span><span class="profile-value">{{ user.created_at.strftime('%d %b %Y') if user.created_at else '—' }}</span></div>
+        <div class="profile-actions">
+          <a href="{{ url_for('profile_edit') }}" class="btn btn-pink">Edit Profile</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Courses taught -->
+    <section class="profile-section">
+      <h2 class="gradient-text">My Courses</h2>
+      <div class="courses-actions">
+        <a href="{{ url_for('course_new') }}" class="btn btn-green">+ Create Course</a>
+      </div>
+      {% if courses %}
+        <div class="card-container">
+          {% for course in courses %}
+            <div class="card course-card">
+              <h3>{{ course.title }}</h3>
+              <p>{{ course.description }}</p>
+              <p class="muted">Created {{ course.created_at.strftime('%d %b %Y') if course.created_at else '' }}</p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">You haven't created any courses yet.</p>
+      {% endif %}
+    </section>
+
+    <!-- Assignments created -->
+    <section class="profile-section">
+      <h2 class="gradient-text">Assignments I've Created</h2>
+      {% if assignments %}
+        <div class="card-container">
+          {% for a in assignments %}
+            <div class="card">
+              <h3>{{ a.title }}</h3>
+              <p>{{ a.description }}</p>
+              <p class="muted">
+                Due: {{ a.due_date.strftime('%d %b %Y') if a.due_date else 'No due date' }}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No assignments yet. Create one from a course page.</p>
+      {% endif %}
+    </section>
+
+    <!-- Submissions to review -->
+    <section class="profile-section">
+      <h2 class="gradient-text">Student Submissions to Review</h2>
+      {% if submissions_to_review %}
+        <div class="profile-table">
+          <div class="profile-table-row profile-table-head">
+            <span>Student</span>
+            <span>Assignment</span>
+            <span>Submitted</span>
+            <span>Score</span>
+            <span>Status</span>
+          </div>
+          {% for s in submissions_to_review %}
+            {% set student = s.student_id %}
+            <div class="profile-table-row">
+              <span>#{{ s.student_id }}</span>
+              <span>#{{ s.assignment_id }}</span>
+              <span>{{ s.created_at.strftime('%d %b %Y') if s.created_at else '' }}</span>
+              <span>{{ s.score if s.score is not none else '—' }}</span>
+              <span>
+                {% if s.score is none %}
+                  <span class="status-pill status-pending">Pending</span>
+                {% else %}
+                  <span class="status-pill status-done">Reviewed</span>
+                {% endif %}
+              </span>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">Nothing waiting on your review right now.</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>

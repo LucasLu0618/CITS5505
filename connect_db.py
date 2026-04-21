@@ -1,8 +1,10 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from functools import wraps
+
+from flask import Flask, flash, render_template, request, redirect, url_for, session
 from sqlalchemy import or_
-from werkzeug.security import check_password_hash
-from database import db, User, Course, Submission
-from werkzeug.security import generate_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+
+from database import db, User, Course, Assignment, Submission
 
 app = Flask(__name__)
 
@@ -11,6 +13,41 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = "dev-key"
 
 db.init_app(app)
+
+
+def login_required(view):
+    """Redirect to login if the user isn't in session."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user_id" not in session:
+            flash("Please log in to continue.", "error")
+            return redirect(url_for("login"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def teacher_required(view):
+    """Require the current user to be a logged-in teacher."""
+
+    @wraps(view)
+    @login_required
+    def wrapped(*args, **kwargs):
+        if session.get("role") != "teacher":
+            flash("Only teachers can do that.", "error")
+            return redirect(url_for("courses_page"))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def current_user():
+    """Return the currently logged-in User, or None."""
+    uid = session.get("user_id")
+    if not uid:
+        return None
+    return User.query.get(uid)
 
 
 @app.route("/")
@@ -23,6 +60,44 @@ def home():
 def courses_page():
     courses = Course.query.all()
     return render_template("courses.html", courses=courses)
+
+
+@app.route("/courses/new", methods=["GET", "POST"])
+@teacher_required
+def course_new():
+    errors = []
+    title = ""
+    description = ""
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        description = (request.form.get("description") or "").strip()
+
+        if not title:
+            errors.append("Title is required.")
+        elif len(title) > 120:
+            errors.append("Title must be 120 characters or fewer.")
+
+        if not description:
+            errors.append("Description is required.")
+
+        if not errors:
+            course = Course(
+                title=title,
+                description=description,
+                teacher_id=session["user_id"],
+            )
+            db.session.add(course)
+            db.session.commit()
+            flash(f"Course '{course.title}' created.", "success")
+            return redirect(url_for("courses_page"))
+
+    return render_template(
+        "course_new.html",
+        errors=errors,
+        title=title,
+        description=description,
+    )
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -91,6 +166,116 @@ def register():
 def showcase():
     featured_submissions = Submission.query.filter_by(is_featured=True).all()
     return render_template("showcase.html", submissions=featured_submissions)
+
+
+@app.route("/profile")
+@login_required
+def profile():
+    user = current_user()
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    if user.role == "teacher":
+        courses = Course.query.filter_by(teacher_id=user.id).order_by(Course.created_at.desc()).all()
+        course_ids = [c.id for c in courses]
+
+        assignments = []
+        submissions_to_review = []
+        if course_ids:
+            assignments = (
+                Assignment.query.filter(Assignment.course_id.in_(course_ids))
+                .order_by(Assignment.created_at.desc())
+                .all()
+            )
+            assignment_ids = [a.id for a in assignments]
+            if assignment_ids:
+                submissions_to_review = (
+                    Submission.query.filter(Submission.assignment_id.in_(assignment_ids))
+                    .order_by(Submission.created_at.desc())
+                    .all()
+                )
+
+        return render_template(
+            "teacher_profile.html",
+            user=user,
+            courses=courses,
+            assignments=assignments,
+            submissions_to_review=submissions_to_review,
+        )
+
+    # Default to student view for any non-teacher role
+    my_submissions = (
+        Submission.query.filter_by(student_id=user.id)
+        .order_by(Submission.created_at.desc())
+        .all()
+    )
+    featured = [s for s in my_submissions if s.is_featured]
+    available_assignments = (
+        Assignment.query.order_by(Assignment.due_date.is_(None), Assignment.due_date.asc()).all()
+    )
+
+    return render_template(
+        "student_profile.html",
+        user=user,
+        submissions=my_submissions,
+        featured=featured,
+        assignments=available_assignments,
+    )
+
+
+@app.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def profile_edit():
+    user = current_user()
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    errors = []
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        current_password = request.form.get("current_password") or ""
+        new_password = request.form.get("new_password") or ""
+        confirm_password = request.form.get("confirm_password") or ""
+
+        # Basic validation for profile fields
+        if not username or not email:
+            errors.append("Username and email cannot be empty.")
+
+        if username and username != user.username:
+            clash = User.query.filter(User.username == username, User.id != user.id).first()
+            if clash:
+                errors.append("Username already in use.")
+
+        if email and email != user.email:
+            clash = User.query.filter(User.email == email, User.id != user.id).first()
+            if clash:
+                errors.append("Email already in use.")
+
+        # Password change is optional — only validate if any password field is filled.
+        wants_password_change = any([current_password, new_password, confirm_password])
+        if wants_password_change:
+            if not check_password_hash(user.password_hash, current_password):
+                errors.append("Current password is incorrect.")
+            if len(new_password) < 8:
+                errors.append("New password must be at least 8 characters long.")
+            if new_password != confirm_password:
+                errors.append("New passwords do not match.")
+
+        if not errors:
+            user.username = username
+            user.email = email
+            if wants_password_change:
+                user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            session["username"] = user.username
+            flash("Profile updated successfully.", "success")
+            return redirect(url_for("profile"))
+
+    return render_template("profile_edit.html", user=user, errors=errors)
 
 
 if __name__ == "__main__":

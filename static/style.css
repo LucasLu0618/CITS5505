@@ -367,6 +367,16 @@ section h2 {
   text-align: center;
   font-weight: 600;
 }
+.success-message {
+  color: #2e8b57;
+  background: #effaf3;
+  border: 1px solid #b6e2c5;
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 18px;
+  text-align: center;
+  font-weight: 600;
+}
 .welcome-badge {
   margin-top: 20px;
   display: inline-block;
@@ -400,13 +410,181 @@ section h2 {
   box-shadow: 0 0 0 4px rgba(124, 198, 254, 0.15);
 }
 
-.error-message {
-  color: #e74c3c;
-  background: #fff0f0;
-  border: 1px solid #f5b7b1;
-  padding: 10px 14px;
-  border-radius: 12px;
-  margin-bottom: 18px;
+.form-group textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid #e8eef5;
+  border-radius: 14px;
+  font-size: 16px;
+  outline: none;
+  transition: 0.3s;
+  font-family: 'Poppins', sans-serif;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.form-group textarea:focus {
+  border-color: #7cc6fe;
+  box-shadow: 0 0 0 4px rgba(124, 198, 254, 0.15);
+}
+
+/* Profile pages !!!!!!!!!!!!!!! */
+.profile-section {
+  padding: 30px 50px 40px;
   text-align: center;
+}
+
+.profile-flash-section {
+  padding: 0 50px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.profile-card {
+  background: #fff6f5;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 28px 32px;
+  border-radius: 20px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  text-align: left;
+}
+
+.profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px dashed #f0d7d7;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.profile-row:last-of-type {
+  border-bottom: none;
+}
+
+.profile-label {
+  color: #3a6ea5;
+  font-weight: 700;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.profile-value {
+  color: #444;
+  font-size: 16px;
   font-weight: 600;
+  word-break: break-word;
+}
+
+.profile-actions {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.role-pill {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+}
+
+.role-teacher {
+  background: #7cc6fe;
+}
+
+.role-student {
+  background: #8dd9a0;
+}
+
+.profile-table {
+  max-width: 960px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  text-align: left;
+}
+
+.profile-table-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f4f8;
+  gap: 10px;
+  font-size: 15px;
+  color: #555;
+  align-items: center;
+}
+
+.profile-table-row:last-child {
+  border-bottom: none;
+}
+
+.profile-table-head {
+  background: #f5faff;
+  color: #3a6ea5;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #b38600;
+}
+
+.status-done {
+  background: #e2f4e6;
+  color: #2e8b57;
+}
+
+.empty-state {
+  color: #888;
+  font-style: italic;
+}
+
+.muted {
+  color: #999;
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+.profile-divider {
+  border: none;
+  border-top: 1px dashed #e8eef5;
+  margin: 20px 0;
+}
+
+.password-hint {
+  font-size: 14px;
+  color: #777;
+  margin-bottom: 12px;
+  text-align: left;
+}
+
+.courses-actions {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 25px;
+}
+
+@media (max-width: 720px) {
+  .profile-table-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }

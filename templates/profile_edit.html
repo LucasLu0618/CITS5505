@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Register - KidCode Hub</title>
+  <title>Edit Profile - KidCode Hub</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -30,60 +30,58 @@
     </nav>
   </header>
 
-  <!-- Register Section -->
   <main class="login-page">
     <section class="login-section">
       <div class="login-card">
-        <h1 class="gradient-text">Create Account</h1>
-        <p class="login-subtitle">Join us and start your coding journey!</p>
+        <h1 class="gradient-text">Edit Profile</h1>
+        <p class="login-subtitle">Update your account details or change your password.</p>
 
-        {% if error %}
-          <p class="error-message">{{ error }}</p>
+        {% if errors %}
+          {% for err in errors %}
+            <p class="error-message">{{ err }}</p>
+          {% endfor %}
         {% endif %}
 
-        <form class="login-form" action="{{ url_for('register') }}" method="post">
+        <form class="login-form" action="{{ url_for('profile_edit') }}" method="post">
 
           <div class="form-group">
             <label for="username">Username</label>
-            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+            <input type="text" id="username" name="username" value="{{ user.username }}" required>
           </div>
 
           <div class="form-group">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" placeholder="Enter your email" required>
+            <input type="email" id="email" name="email" value="{{ user.email }}" required>
+          </div>
+
+          <hr class="profile-divider">
+          <p class="password-hint">Leave the password fields blank to keep your current password.</p>
+
+          <div class="form-group">
+            <label for="current_password">Current Password</label>
+            <input type="password" id="current_password" name="current_password" placeholder="Enter current password">
           </div>
 
           <div class="form-group">
-            <label for="role">Role</label>
-            <select id="role" name="role" required>
-              <option value="">Select your role</option>
-              <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
-            </select>
+            <label for="new_password">New Password</label>
+            <input type="password" id="new_password" name="new_password" placeholder="At least 8 characters">
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Create a password" required>
+            <label for="confirm_password">Confirm New Password</label>
+            <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter new password">
           </div>
 
-          <div class="form-group">
-            <label for="confirm">Confirm Password</label>
-            <input type="password" id="confirm" name="confirm" placeholder="Confirm your password" required>
-          </div>
-
-          <button type="submit" class="btn btn-green login-btn">Register</button>
+          <button type="submit" class="btn btn-green login-btn">Save Changes</button>
         </form>
 
         <p class="register-link">
-          Already have an account?
-          <a href="/login">Login here</a>
+          <a href="{{ url_for('profile') }}">Back to profile</a>
         </p>
       </div>
     </section>
   </main>
 
-  <!-- Footer -->
   <footer class="footer">
     <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
   </footer>

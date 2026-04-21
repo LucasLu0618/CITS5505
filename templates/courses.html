@@ -19,8 +19,13 @@
         <li><a href="/">Home</a></li>
         <li><a href="/courses">Courses</a></li>
         <li><a href="/showcase">Showcase</a></li>
-        <li><a href="/login">Login</a></li>
-        <li><a href="/register">Register</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
       </ul>
     </nav>
   </header>
@@ -38,9 +43,25 @@
       </div>
     </section>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="profile-flash-section">
+          {% for category, msg in messages %}
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">{{ msg }}</p>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
     <!-- Course Cards -->
     <section class="courses-page">
       <h2 class="gradient-text">Popular Courses</h2>
+
+      {% if session.get("role") == "teacher" %}
+        <div class="courses-actions">
+          <a href="{{ url_for('course_new') }}" class="btn btn-green">+ Create Course</a>
+        </div>
+      {% endif %}
 
         <div class="card-container">
           {% for course in courses %}
@@ -49,6 +70,8 @@
               <p>{{ course.description }}</p>
               <a href="#" class="btn btn-pink">View Details</a>
             </div>
+          {% else %}
+            <p class="empty-state">No courses yet.</p>
           {% endfor %}
         </div>
     </section>

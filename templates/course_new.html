@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Login - KidCode Hub</title>
+  <title>Create Course - KidCode Hub</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -31,37 +31,33 @@
   </header>
 
   <main class="login-page">
+    <section class="login-section">
       <div class="login-card">
-        <h1 class="gradient-text">Welcome Back</h1>
-        <p class="login-subtitle">Log in to continue your coding journey.</p>
-        {% if error %}
-          <p class="error-message">{{ error }}</p>
+        <h1 class="gradient-text">Create a Course</h1>
+        <p class="login-subtitle">Add a new course to KidCode Hub.</p>
+
+        {% if errors %}
+          {% for err in errors %}
+            <p class="error-message">{{ err }}</p>
+          {% endfor %}
         {% endif %}
-        <form class="login-form" action="{{ url_for('login') }}" method="post">
+
+        <form class="login-form" action="{{ url_for('course_new') }}" method="post">
           <div class="form-group">
-            <label for="email">Email or Username</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or username">
+            <label for="title">Course Title</label>
+            <input type="text" id="title" name="title" value="{{ title }}" placeholder="e.g. Python for Beginners" required>
           </div>
 
           <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password">
+            <label for="description">Description</label>
+            <textarea id="description" name="description" rows="5" placeholder="What will students learn in this course?" required>{{ description }}</textarea>
           </div>
 
-          <div class="form-options">
-            <label class="remember-me">
-              <input type="checkbox" name="remember">
-              Remember me
-            </label>
-            <a href="#" class="forgot-link">Forgot password?</a>
-          </div>
-
-          <button type="submit" class="btn btn-pink login-btn">Login</button>
+          <button type="submit" class="btn btn-green login-btn">Create Course</button>
         </form>
 
         <p class="register-link">
-          Don’t have an account?
-          <a href="register.html">Register here</a>
+          <a href="{{ url_for('courses_page') }}">Cancel</a>
         </p>
       </div>
     </section>
