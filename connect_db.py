@@ -161,6 +161,34 @@ def register():
 
     return render_template("register.html", error=error)
 
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    error = None
+
+    if request.method == "POST":
+        identifier = (request.form.get("identifier") or "").strip()
+        new_password = request.form.get("new_password") or ""
+        confirm_password = request.form.get("confirm_password") or ""
+
+        user = User.query.filter(
+            or_(User.email == identifier, User.username == identifier)
+        ).first()
+
+        if not identifier or not new_password or not confirm_password:
+            error = "Please fill in all fields."
+        elif user is None:
+            error = "No account found with that username or email."
+        elif len(new_password) < 8:
+            error = "Password must be at least 8 characters long."
+        elif new_password != confirm_password:
+            error = "Passwords do not match."
+        else:
+            user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            flash("Password reset successful. Please log in with your new password.", "success")
+            return redirect(url_for("login"))
+
+    return render_template("forgot_password.html", error=error)
 
 @app.route("/showcase")
 def showcase():

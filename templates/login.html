@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  <!-- Navigation Bar -->
   <header class="navbar">
     <div class="logo">
       <a href="/">KidCode Hub</a>
@@ -31,40 +30,51 @@
   </header>
 
   <main class="login-page">
-      <div class="login-card">
-        <h1 class="gradient-text">Welcome Back</h1>
-        <p class="login-subtitle">Log in to continue your coding journey.</p>
-        {% if error %}
-          <p class="error-message">{{ error }}</p>
+    <div class="login-card">
+      <h1 class="gradient-text">Welcome Back</h1>
+      <p class="login-subtitle">Log in to continue your coding journey.</p>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">
+              {{ msg }}
+            </p>
+          {% endfor %}
         {% endif %}
-        <form class="login-form" action="{{ url_for('login') }}" method="post">
-          <div class="form-group">
-            <label for="email">Email or Username</label>
-            <input type="text" id="email" name="email" placeholder="Enter your email or username">
-          </div>
+      {% endwith %}
 
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" id="password" name="password" placeholder="Enter your password">
-          </div>
+      {% if error %}
+        <p class="error-message">{{ error }}</p>
+      {% endif %}
 
-          <div class="form-options">
-            <label class="remember-me">
-              <input type="checkbox" name="remember">
-              Remember me
-            </label>
-            <a href="#" class="forgot-link">Forgot password?</a>
-          </div>
+      <form class="login-form" action="{{ url_for('login') }}" method="post">
+        <div class="form-group">
+          <label for="email">Email or Username</label>
+          <input type="text" id="email" name="email" placeholder="Enter your email or username" required>
+        </div>
 
-          <button type="submit" class="btn btn-pink login-btn">Login</button>
-        </form>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="Enter your password" required>
+        </div>
 
-        <p class="register-link">
-          Don’t have an account?
-          <a href="/register">Register here</a>
-        </p>
-      </div>
-    </section>
+        <div class="form-options">
+          <label class="remember-me">
+            <input type="checkbox" name="remember">
+            Remember me
+          </label>
+          <a href="{{ url_for('forgot_password') }}" class="forgot-link">Forgot password?</a>
+        </div>
+
+        <button type="submit" class="btn btn-pink login-btn">Login</button>
+      </form>
+
+      <p class="register-link">
+        Don’t have an account?
+        <a href="/register">Register here</a>
+      </p>
+    </div>
   </main>
 
   <footer class="footer">
