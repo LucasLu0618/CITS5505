@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Lesson - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main class="login-page">
+    <section class="login-section">
+      <div class="login-card">
+        <h1 class="gradient-text">Add a Lesson</h1>
+        <p class="login-subtitle">Course: {{ course.title }}</p>
+
+        {% if errors %}
+          {% for err in errors %}
+            <p class="error-message">{{ err }}</p>
+          {% endfor %}
+        {% endif %}
+
+        <form class="login-form"
+              action="{{ url_for('lesson_new', course_id=course.id) }}"
+              method="post">
+          <div class="form-group">
+            <label for="title">Lesson Title</label>
+            <input type="text" id="title" name="title" value="{{ title }}"
+                   placeholder="e.g. Variables and Data Types" required>
+          </div>
+
+          <div class="form-group">
+            <label for="body">Lesson Content</label>
+            <textarea id="body" name="body" rows="8"
+                      placeholder="What will the student learn in this lesson?" required>{{ body }}</textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="video_url">Video URL (optional)</label>
+            <input type="url" id="video_url" name="video_url" value="{{ video_url }}"
+                   placeholder="https://www.youtube.com/watch?v=...">
+          </div>
+
+          <button type="submit" class="btn btn-green login-btn">Add Lesson</button>
+        </form>
+
+        <p class="register-link">
+          <a href="{{ url_for('course_details', course_id=course.id) }}">Cancel</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>

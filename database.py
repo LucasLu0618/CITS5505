@@ -47,3 +47,26 @@ class Submission(db.Model):
     feedback = db.Column(db.Text, nullable=True)
     is_featured = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Lesson(db.Model):
+    __tablename__ = "lessons"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id= db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
+    title= db.Column(db.Text, nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    video_url = db.Column(db.String(255), nullable=True)
+    order_index = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Resource(db.Model):
+    __tablename__ = "resources"
+
+    id = db.Column(db.Integer, primary_key=True)
+    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
+    filename = db.Column(db.String(255),nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    uploaded_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
