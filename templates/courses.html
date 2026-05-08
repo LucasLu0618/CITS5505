@@ -68,7 +68,7 @@
             <div class="card course-card">
               <h3>{{ course.title }}</h3>
               <p>{{ course.description }}</p>
-              <a href="#" class="btn btn-pink">View Details</a>
+              <a href="{{ url_for('course_details', course_id=course.id)}}" class="btn btn-pink">View Details</a>
             </div>
           {% else %}
             <p class="empty-state">No courses yet.</p>

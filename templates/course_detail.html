@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ course.title }} - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Course Header -->
+    <section class="hero">
+      <div class="hero-center">
+        <h1 class="gradient-text">{{ course.title }}</h1>
+        <p class="hero-subtitle">{{ course.description }}</p>
+      </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="profile-flash-section">
+          {% for category, msg in messages %}
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">{{ msg }}</p>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Lessons -->
+    <section class="courses-page">
+      <h2 class="gradient-text">Lessons</h2>
+
+      {% if is_owner %}
+        <div class="courses-actions">
+          <a href="{{ url_for('lesson_new', course_id=course.id) }}" class="btn btn-green">+ Add Lesson</a>
+        </div>
+      {% endif %}
+
+      <div class="card-container">
+        {% for l in lessons %}
+          <div class="card course-card">
+            <h3>{{ loop.index }}. {{ l.title }}</h3>
+            <p>{{ l.body }}</p>
+            {% if l.video_url %}
+              <p><a href="{{ l.video_url }}" target="_blank" rel="noopener">Watch video</a></p>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="empty-state">No lessons yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Assignments -->
+    <section class="courses-page">
+      <h2 class="gradient-text">Assignments</h2>
+
+      {% if is_owner %}
+        <div class="courses-actions">
+          <a href="{{ url_for('assignment_new', course_id=course.id) }}" class="btn btn-green">+ Add Assignment</a>
+        </div>
+      {% endif %}
+
+      <div class="card-container">
+        {% for a in assignments %}
+          <div class="card course-card">
+            <h3>{{ a.title }}</h3>
+            <p>{{ a.description }}</p>
+            {% if a.due_date %}
+              <p><strong>Due:</strong> {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="empty-state">No assignments yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <!-- Resources -->
+    <section class="courses-page">
+      <h2 class="gradient-text">Resources</h2>
+
+      {% if is_owner %}
+        <div class="courses-actions">
+          <form action="{{ url_for('resource_upload', course_id=course.id) }}"
+                method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;">
+            <div class="form-group">
+              <label for="file">Upload a file (PDF, image, mp4 — max 5 MB)</label>
+              <input type="file" id="file" name="file" required>
+            </div>
+            <button type="submit" class="btn btn-green">Upload</button>
+          </form>
+        </div>
+      {% endif %}
+
+      <div class="card-container">
+        {% for r in resources %}
+          <div class="card course-card">
+            <h3>{{ r.original_filename }}</h3>
+            <p>
+              <a class="btn btn-pink"
+                 href="{{ url_for('static', filename='uploads/courses/' ~ r.filename) }}"
+                 target="_blank" rel="noopener">Open / Download</a>
+            </p>
+          </div>
+        {% else %}
+          <p class="empty-state">No resources yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <p style="text-align:center; margin: 1rem 0 3rem;">
+      <a href="{{ url_for('courses_page') }}">&larr; Back to all courses</a>
+    </p>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>
