@@ -56,7 +56,7 @@ def current_user():
 
 @app.route("/")
 def home():
-    courses = Course.query.limit(3).all()
+    courses = Course.query.order_by(Course.created_at.desc()).limit(3).all()
     return render_template("index.html", courses=courses)
 
 
