@@ -143,6 +143,8 @@ def forgot_password():
             error = "Password must be at least 8 characters long."
         elif new_password != confirm_password:
             error = "Passwords do not match."
+        elif check_password_hash(user.password_hash, new_password):
+            error = "New password must be different from your old password."
         else:
             user.password_hash = generate_password_hash(new_password)
             db.session.commit()
@@ -293,6 +295,8 @@ def profile_edit():
                 errors.append("New password must be at least 8 characters long.")
             if new_password != confirm_password:
                 errors.append("New passwords do not match.")
+            if check_password_hash(user.password_hash, new_password):
+                errors.append("New password must be different from your current password.")
 
         if not errors:
             user.username = username
