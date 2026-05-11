@@ -60,6 +60,17 @@ def courses_page():
     courses = Course.query.all()
     return render_template("courses.html", courses=courses)
 
+@app.route("/courses/<int:course_id>")
+def course_details(course_id):
+    course = Course.query.get_or_404(course_id)
+    return render_template(
+        "course_detail.html",
+        course=course,
+        lessons=[],
+        assignments=[],
+        resources=[],
+        is_owner=(session.get("user_id") == course.teacher_id),
+    )
 
 @app.route("/courses/new", methods=["GET", "POST"])
 @teacher_required
