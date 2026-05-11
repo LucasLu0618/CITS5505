@@ -43,6 +43,7 @@
         {% endif %}
 
         <form class="login-form" action="{{ url_for('course_new') }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-group">
             <label for="title">Course Title</label>
             <input type="text" id="title" name="title" value="{{ title }}" placeholder="e.g. Python for Beginners" required>

@@ -1,47 +1,37 @@
 import os
-import uuid
 from functools import wraps
-from datetime import datetime
 
+from dotenv import load_dotenv
 from flask import Flask, flash, render_template, request, redirect, url_for, session
+from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
-from werkzeug.utils import secure_filename
 
-from database import db, User, Course, Assignment, Submission, Lesson, Resource
+from database import db, User, Course, Assignment, Submission
+
+load_dotenv()
 
 app = Flask(__name__)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///kidcode.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["SECRET_KEY"] = "dev-key"
-
-UPLOAD_FOLDER = "static/uploads/courses"
-MAX_CONTENT_LENGTH = 5 * 1024 * 1024  # 5 MB limit for uploaded files
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "mp4", "pdf"}
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-app.config["MAX_CONTENT_LENGTH"] = MAX_CONTENT_LENGTH
-app.config["ALLOWED_EXTENSIONS"] = ALLOWED_EXTENSIONS
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-for-local-only")
 
 db.init_app(app)
+csrf = CSRFProtect(app)
 
 
 def login_required(view):
-    """Redirect to login if the user isn't in session."""
-
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user_id" not in session:
             flash("Please log in to continue.", "error")
             return redirect(url_for("login"))
         return view(*args, **kwargs)
-
     return wrapped
 
 
 def teacher_required(view):
-    """Require the current user to be a logged-in teacher."""
-
     @wraps(view)
     @login_required
     def wrapped(*args, **kwargs):
@@ -49,12 +39,10 @@ def teacher_required(view):
             flash("Only teachers can do that.", "error")
             return redirect(url_for("courses_page"))
         return view(*args, **kwargs)
-
     return wrapped
 
 
 def current_user():
-    """Return the currently logged-in User, or None."""
     uid = session.get("user_id")
     if not uid:
         return None
@@ -116,8 +104,8 @@ def login():
     error = None
 
     if request.method == "POST":
-        identifier = request.form.get("email")
-        password = request.form.get("password")
+        identifier = (request.form.get("email") or "").strip()
+        password = request.form.get("password") or ""
 
         user = User.query.filter(
             or_(User.email == identifier, User.username == identifier)
@@ -132,47 +120,6 @@ def login():
             error = "Invalid username/email or password."
 
     return render_template("login.html", error=error)
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect(url_for("login"))
-
-
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    error = None
-
-    if request.method == "POST":
-        username = request.form.get("username")
-        email = request.form.get("email")
-        role = request.form.get("role")
-        password = request.form.get("password")
-        confirm = request.form.get("confirm")
-
-        if not username or not email or not role or not password or not confirm:
-            error = "Please fill in all fields."
-        elif password != confirm:
-            error = "Passwords do not match."
-        elif len(password) < 8:
-            error = "Password must be at least 8 characters long."
-        elif User.query.filter_by(username=username).first():
-            error = "Username already exists."
-        elif User.query.filter_by(email=email).first():
-            error = "Email already exists."
-        else:
-            new_user = User(
-                username=username,
-                email=email,
-                password_hash=generate_password_hash(password),
-                role=role,
-            )
-            db.session.add(new_user)
-            db.session.commit()
-            return redirect(url_for("login"))
-
-    return render_template("register.html", error=error)
 
 
 @app.route("/forgot-password", methods=["GET", "POST"])
@@ -199,13 +146,52 @@ def forgot_password():
         else:
             user.password_hash = generate_password_hash(new_password)
             db.session.commit()
-            flash(
-                "Password reset successful. Please log in with your new password.",
-                "success",
-            )
+            flash("Password reset successful. Please log in with your new password.", "success")
             return redirect(url_for("login"))
 
     return render_template("forgot_password.html", error=error)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+
+@app.route("/register", methods=["GET", "POST"])
+def register():
+    error = None
+
+    if request.method == "POST":
+        username = (request.form.get("username") or "").strip()
+        email = (request.form.get("email") or "").strip()
+        role = request.form.get("role")
+        password = request.form.get("password") or ""
+        confirm = request.form.get("confirm") or ""
+
+        if not username or not email or not role or not password or not confirm:
+            error = "Please fill in all fields."
+        elif password != confirm:
+            error = "Passwords do not match."
+        elif len(password) < 8:
+            error = "Password must be at least 8 characters long."
+        elif User.query.filter_by(username=username).first():
+            error = "Username already exists."
+        elif User.query.filter_by(email=email).first():
+            error = "Email already exists."
+        else:
+            new_user = User(
+                username=username,
+                email=email,
+                password_hash=generate_password_hash(password),
+                role=role
+            )
+            db.session.add(new_user)
+            db.session.commit()
+            flash("Registration successful. Please log in.", "success")
+            return redirect(url_for("login"))
+
+    return render_template("register.html", error=error)
 
 
 @app.route("/showcase")
@@ -223,11 +209,7 @@ def profile():
         return redirect(url_for("login"))
 
     if user.role == "teacher":
-        courses = (
-            Course.query.filter_by(teacher_id=user.id)
-            .order_by(Course.created_at.desc())
-            .all()
-        )
+        courses = Course.query.filter_by(teacher_id=user.id).order_by(Course.created_at.desc()).all()
         course_ids = [c.id for c in courses]
 
         assignments = []
@@ -241,9 +223,7 @@ def profile():
             assignment_ids = [a.id for a in assignments]
             if assignment_ids:
                 submissions_to_review = (
-                    Submission.query.filter(
-                        Submission.assignment_id.in_(assignment_ids)
-                    )
+                    Submission.query.filter(Submission.assignment_id.in_(assignment_ids))
                     .order_by(Submission.created_at.desc())
                     .all()
                 )
@@ -256,7 +236,6 @@ def profile():
             submissions_to_review=submissions_to_review,
         )
 
-    # Default to student view for any non-teacher role
     my_submissions = (
         Submission.query.filter_by(student_id=user.id)
         .order_by(Submission.created_at.desc())
@@ -264,9 +243,7 @@ def profile():
     )
     featured = [s for s in my_submissions if s.is_featured]
     available_assignments = (
-        Assignment.query.order_by(
-            Assignment.due_date.is_(None), Assignment.due_date.asc()
-        ).all()
+        Assignment.query.order_by(Assignment.due_date.is_(None), Assignment.due_date.asc()).all()
     )
 
     return render_template(
@@ -295,28 +272,20 @@ def profile_edit():
         new_password = request.form.get("new_password") or ""
         confirm_password = request.form.get("confirm_password") or ""
 
-        # Basic validation for profile fields
         if not username or not email:
             errors.append("Username and email cannot be empty.")
 
         if username and username != user.username:
-            clash = User.query.filter(
-                User.username == username, User.id != user.id
-            ).first()
+            clash = User.query.filter(User.username == username, User.id != user.id).first()
             if clash:
                 errors.append("Username already in use.")
 
         if email and email != user.email:
-            clash = User.query.filter(
-                User.email == email, User.id != user.id
-            ).first()
+            clash = User.query.filter(User.email == email, User.id != user.id).first()
             if clash:
                 errors.append("Email already in use.")
 
-        # Password change is optional - only validate if any password field is filled.
-        wants_password_change = any(
-            [current_password, new_password, confirm_password]
-        )
+        wants_password_change = any([current_password, new_password, confirm_password])
         if wants_password_change:
             if not check_password_hash(user.password_hash, current_password):
                 errors.append("Current password is incorrect.")
@@ -336,188 +305,6 @@ def profile_edit():
             return redirect(url_for("profile"))
 
     return render_template("profile_edit.html", user=user, errors=errors)
-
-
-# -------------------- Course detail + content --------------------
-
-@app.route("/courses/<int:course_id>")
-def course_details(course_id):
-    course = Course.query.get_or_404(course_id)
-    lessons = (
-        Lesson.query.filter_by(course_id=course.id)
-        .order_by(Lesson.order_index)
-        .all()
-    )
-    assignments = (
-        Assignment.query.filter_by(course_id=course.id)
-        .order_by(Assignment.created_at.desc())
-        .all()
-    )
-    resources = (
-        Resource.query.filter_by(course_id=course.id)
-        .order_by(Resource.created_at.desc())
-        .all()
-    )
-    is_owner = session.get("user_id") == course.teacher_id
-    return render_template(
-        "course_detail.html",
-        course=course,
-        lessons=lessons,
-        assignments=assignments,
-        resources=resources,
-        is_owner=is_owner,
-    )
-
-
-@app.route("/courses/<int:course_id>/lessons/new", methods=["GET", "POST"])
-@teacher_required
-def lesson_new(course_id):
-    course = Course.query.get_or_404(course_id)
-    if course.teacher_id != session["user_id"]:
-        flash("You can only add lessons to your own courses.", "error")
-        return redirect(url_for("course_details", course_id=course.id))
-
-    errors = []
-    title = ""
-    body = ""
-    video_url = ""
-
-    if request.method == "POST":
-        title = (request.form.get("title") or "").strip()
-        body = (request.form.get("body") or "").strip()
-        video_url = (request.form.get("video_url") or "").strip()
-
-        if not title:
-            errors.append("Title is required.")
-        if not body:
-            errors.append("Lesson body is required.")
-
-        if not errors:
-            last = (
-                Lesson.query.filter_by(course_id=course.id)
-                .order_by(Lesson.order_index.desc())
-                .first()
-            )
-            next_index = (last.order_index + 1) if last else 1
-
-            lesson = Lesson(
-                course_id=course.id,
-                title=title,
-                body=body,
-                video_url=video_url or None,
-                order_index=next_index,
-            )
-            db.session.add(lesson)
-            db.session.commit()
-            flash(f"Lesson '{lesson.title}' added.", "success")
-            return redirect(url_for("course_details", course_id=course.id))
-
-    return render_template(
-        "lesson_new.html",
-        course=course,
-        errors=errors,
-        title=title,
-        body=body,
-        video_url=video_url,
-    )
-
-
-@app.route("/courses/<int:course_id>/assignments/new", methods=["GET", "POST"])
-@teacher_required
-def assignment_new(course_id):
-    course = Course.query.get_or_404(course_id)
-    if course.teacher_id != session["user_id"]:
-        flash("You can only add assignments to your own courses.", "error")
-        return redirect(url_for("course_details", course_id=course.id))
-
-    errors = []
-    title = ""
-    description = ""
-    due_date_raw = ""
-
-    if request.method == "POST":
-        title = (request.form.get("title") or "").strip()
-        description = (request.form.get("description") or "").strip()
-        due_date_raw = (request.form.get("due_date") or "").strip()
-
-        if not title:
-            errors.append("Title is required.")
-        if not description:
-            errors.append("Description is required.")
-
-        due_date = None
-        if due_date_raw:
-            try:
-                # <input type="datetime-local"> sends "YYYY-MM-DDTHH:MM"
-                due_date = datetime.strptime(due_date_raw, "%Y-%m-%dT%H:%M")
-            except ValueError:
-                errors.append("Invalid due date format.")
-
-        if not errors:
-            assignment = Assignment(
-                course_id=course.id,
-                title=title,
-                description=description,
-                due_date=due_date,
-            )
-            db.session.add(assignment)
-            db.session.commit()
-            flash(f"Assignment '{assignment.title}' added.", "success")
-            return redirect(url_for("course_details", course_id=course.id))
-
-    return render_template(
-        "assignment_new.html",
-        course=course,
-        errors=errors,
-        title=title,
-        description=description,
-        due_date=due_date_raw,
-    )
-
-
-def _allowed_file(filename: str) -> bool:
-    if "." not in filename:
-        return False
-    ext = filename.rsplit(".", 1)[1].lower()
-    return ext in app.config["ALLOWED_EXTENSIONS"]
-
-
-@app.route("/courses/<int:course_id>/resources/upload", methods=["POST"])
-@teacher_required
-def resource_upload(course_id):
-    course = Course.query.get_or_404(course_id)
-    if course.teacher_id != session["user_id"]:
-        flash("You can only upload resources to your own courses.", "error")
-        return redirect(url_for("course_details", course_id=course.id))
-
-    f = request.files.get("file")
-    if not f or not f.filename:
-        flash("Please choose a file to upload.", "error")
-        return redirect(url_for("course_details", course_id=course.id))
-
-    if not _allowed_file(f.filename):
-        allowed = ", ".join(sorted(app.config["ALLOWED_EXTENSIONS"]))
-        flash(f"File type not allowed. Allowed types: {allowed}.", "error")
-        return redirect(url_for("course_details", course_id=course.id))
-
-    original = secure_filename(f.filename)
-    ext = original.rsplit(".", 1)[1].lower()
-    saved_name = f"{uuid.uuid4().hex}.{ext}"
-
-    upload_dir = app.config["UPLOAD_FOLDER"]
-    os.makedirs(upload_dir, exist_ok=True)
-    f.save(os.path.join(upload_dir, saved_name))
-
-    resource = Resource(
-        course_id=course.id,
-        filename=saved_name,
-        original_filename=original,
-        uploaded_by=session["user_id"],
-    )
-    db.session.add(resource)
-    db.session.commit()
-    flash(f"Uploaded '{original}'.", "success")
-    return redirect(url_for("course_details", course_id=course.id))
 
 
 if __name__ == "__main__":

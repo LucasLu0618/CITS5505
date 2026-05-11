@@ -45,6 +45,7 @@
         <form class="login-form"
               action="{{ url_for('lesson_new', course_id=course.id) }}"
               method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-group">
             <label for="title">Lesson Title</label>
             <input type="text" id="title" name="title" value="{{ title }}"
