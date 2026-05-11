@@ -42,7 +42,9 @@
           {% endfor %}
         {% endif %}
 
-        <form class="login-form" action="{{ url_for('course_new') }}" method="post">
+        <form class="login-form" action="{{ url_for('course_new') }}" method="post"
+        data-confirm
+      data-confirm-message="Are you sure you want to create this course?">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-group">
             <label for="title">Course Title</label>
@@ -67,6 +69,6 @@
   <footer class="footer">
     <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
   </footer>
-
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

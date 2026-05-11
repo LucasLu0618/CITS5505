@@ -106,7 +106,9 @@
       {% if is_owner %}
         <div class="courses-actions">
           <form action="{{ url_for('resource_upload', course_id=course.id) }}"
-                method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;">
+                method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;"
+                data-confirm
+      data-confirm-message="Are you sure you want to upload this file?">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
               <label for="file">Upload a file (PDF, image, mp4 — max 5 MB)</label>
@@ -141,6 +143,6 @@
   <footer class="footer">
     <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
   </footer>
-
+<script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
