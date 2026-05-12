@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Project - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main class="login-page">
+    <section class="login-section">
+      <div class="login-card">
+        <h1 class="gradient-text">
+          {% if existing %}Update Submission{% else %}Submit Project{% endif %}
+        </h1>
+        <p class="login-subtitle">
+          Assignment: {{ assignment.title }}
+        </p>
+
+        {% if errors %}
+          {% for err in errors %}
+            <p class="error-message">{{ err }}</p>
+          {% endfor %}
+        {% endif %}
+
+        <form class="login-form" action="{{ url_for('submission_new', assignment_id=assignment.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label for="content">Project Submission</label>
+            <textarea id="content" name="content" rows="8" placeholder="Describe your project or paste your submission details here..." required>{{ content or (existing.content if existing else '') }}</textarea>
+          </div>
+
+          <button type="submit" class="btn btn-green login-btn">
+            {% if existing %}Update Submission{% else %}Submit Project{% endif %}
+          </button>
+        </form>
+
+        <p class="register-link">
+          <a href="{{ url_for('course_details', course_id=course.id) }}">Back to Course</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>

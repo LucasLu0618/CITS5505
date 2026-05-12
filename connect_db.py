@@ -465,6 +465,128 @@ def profile_edit():
     return render_template("profile_edit.html", user=user, errors=errors)
 
 
+
+
+@app.route("/assignments/<int:assignment_id>/submit", methods=["GET", "POST"])
+@login_required
+def submission_new(assignment_id):
+    user = current_user()
+    assignment = Assignment.query.get_or_404(assignment_id)
+    course = Course.query.get_or_404(assignment.course_id)
+
+    if user.role != "student":
+        flash("Only students can submit work.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    errors = []
+    content = ""
+
+    existing = Submission.query.filter_by(
+        assignment_id=assignment.id,
+        student_id=user.id
+    ).first()
+
+    if request.method == "POST":
+        content = (request.form.get("content") or "").strip()
+
+        if not content:
+            errors.append("Submission content is required.")
+
+        if not errors:
+            if existing:
+                existing.content = content
+                existing.created_at = datetime.utcnow()
+                flash("Submission updated successfully.", "success")
+            else:
+                submission = Submission(
+                    assignment_id=assignment.id,
+                    student_id=user.id,
+                    content=content
+                )
+                db.session.add(submission)
+                flash("Submission added successfully.", "success")
+
+            db.session.commit()
+            return redirect(url_for("course_details", course_id=course.id))
+
+    return render_template(
+        "submission_new.html",
+        assignment=assignment,
+        course=course,
+        errors=errors,
+        content=content,
+        existing=existing
+    )
+@app.route("/assignments/<int:assignment_id>/submissions")
+@login_required
+def assignment_submissions(assignment_id):
+    user = current_user()
+    assignment = Assignment.query.get_or_404(assignment_id)
+    course = Course.query.get_or_404(assignment.course_id)
+
+    if user.role != "teacher" or course.teacher_id != user.id:
+        flash("You can only view submissions for your own course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    submissions = (
+        db.session.query(Submission, User)
+        .join(User, Submission.student_id == User.id)
+        .filter(Submission.assignment_id == assignment.id)
+        .order_by(Submission.created_at.desc())
+        .all()
+    )
+
+    return render_template(
+        "assignment_submissions.html",
+        assignment=assignment,
+        course=course,
+        submissions=submissions
+    )
+@app.route("/submissions/<int:submission_id>/review", methods=["GET", "POST"])
+@login_required
+def submission_review(submission_id):
+    user = current_user()
+    submission = Submission.query.get_or_404(submission_id)
+    assignment = Assignment.query.get_or_404(submission.assignment_id)
+    course = Course.query.get_or_404(assignment.course_id)
+
+    if user.role != "teacher" or course.teacher_id != user.id:
+        flash("You can only review submissions for your own course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    errors = []
+
+    if request.method == "POST":
+        score_raw = (request.form.get("score") or "").strip()
+        feedback = (request.form.get("feedback") or "").strip()
+        is_featured = True if request.form.get("is_featured") else False
+
+        score = None
+        if score_raw:
+            try:
+                score = int(score_raw)
+                if score < 0 or score > 100:
+                    errors.append("Score must be between 0 and 100.")
+            except ValueError:
+                errors.append("Score must be a number.")
+
+        if not errors:
+            submission.score = score
+            submission.feedback = feedback
+            submission.is_featured = is_featured
+            db.session.commit()
+            flash("Feedback saved successfully.", "success")
+            return redirect(url_for("assignment_submissions", assignment_id=assignment.id))
+
+    return render_template(
+        "submission_review.html",
+        submission=submission,
+        assignment=assignment,
+        course=course,
+        errors=errors
+    )
+print(app.url_map)
+
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()

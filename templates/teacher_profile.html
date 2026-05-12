@@ -99,14 +99,18 @@
               <p class="muted">
                 Due: {{ a.due_date.strftime('%d %b %Y') if a.due_date else 'No due date' }}
               </p>
+
+              <a href="{{ url_for('assignment_submissions', assignment_id=a.id) }}"
+                class="btn btn-pink">
+                View Submissions
+              </a>
             </div>
           {% endfor %}
         </div>
       {% else %}
         <p class="empty-state">No assignments yet. Create one from a course page.</p>
       {% endif %}
-    </section>
-
+    </section>  
     <!-- Submissions to review -->
     <section class="profile-section">
       <h2 class="gradient-text">Student Submissions to Review</h2>
