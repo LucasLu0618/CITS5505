@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import db, User, Course, Assignment, Submission, Lesson, Resource
+from database import db, User, Course, Assignment, Submission, Lesson, Resource, Enrollment
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
@@ -73,6 +73,13 @@ def course_details(course_id):
     resources = Resource.query.filter_by(course_id=course.id).order_by(Resource.created_at.desc()).all()
     is_owner = session.get("user_id") == course.teacher_id
 
+    is_enrolled = False
+    if session.get("role") == "student" and session.get("user_id"):
+        is_enrolled = Enrollment.query.filter_by(
+            student_id=session["user_id"],
+            course_id=course.id
+        ).first() is not None
+
     return render_template(
         "course_detail.html",
         course=course,
@@ -80,7 +87,37 @@ def course_details(course_id):
         assignments=assignments,
         resources=resources,
         is_owner=is_owner,
+        is_enrolled=is_enrolled,
     )
+
+@app.route("/courses/<int:course_id>/join", methods=["POST"])
+@login_required
+def join_course(course_id):
+    user = current_user()
+    course = Course.query.get_or_404(course_id)
+
+    if user.role != "student":
+        flash("Only students can join courses.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    existing = Enrollment.query.filter_by(
+        student_id=user.id,
+        course_id=course.id
+    ).first()
+
+    if existing:
+        flash("You have already joined this course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    enrollment = Enrollment(
+        student_id=user.id,
+        course_id=course.id
+    )
+    db.session.add(enrollment)
+    db.session.commit()
+
+    flash("Successfully joined the course.", "success")
+    return redirect(url_for("course_details", course_id=course.id))
 
 @app.route("/courses/new", methods=["GET", "POST"])
 @teacher_required
@@ -398,9 +435,24 @@ def profile():
         .all()
     )
     featured = [s for s in my_submissions if s.is_featured]
-    available_assignments = (
-        Assignment.query.order_by(Assignment.due_date.is_(None), Assignment.due_date.asc()).all()
-    )
+
+    enrollments = Enrollment.query.filter_by(student_id=user.id).all()
+    enrolled_course_ids = [e.course_id for e in enrollments]
+
+    if enrolled_course_ids:
+        enrolled_courses = (
+            Course.query.filter(Course.id.in_(enrolled_course_ids))
+            .order_by(Course.created_at.desc())
+            .all()
+        )
+        available_assignments = (
+            Assignment.query.filter(Assignment.course_id.in_(enrolled_course_ids))
+            .order_by(Assignment.due_date.is_(None), Assignment.due_date.asc())
+            .all()
+        )
+    else:
+        enrolled_courses = []
+        available_assignments = []
 
     return render_template(
         "student_profile.html",
@@ -408,6 +460,7 @@ def profile():
         submissions=my_submissions,
         featured=featured,
         assignments=available_assignments,
+        enrolled_courses=enrolled_courses,
     )
 
 

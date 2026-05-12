@@ -9,7 +9,6 @@
 </head>
 <body>
 
-  <!-- Navigation Bar -->
   <header class="navbar">
     <div class="logo">
       <a href="/">KidCode Hub</a>
@@ -31,7 +30,6 @@
   </header>
 
   <main>
-    <!-- Course Header -->
     <section class="hero">
       <div class="hero-center">
         <h1 class="gradient-text">{{ course.title }}</h1>
@@ -43,13 +41,29 @@
       {% if messages %}
         <section class="profile-flash-section">
           {% for category, msg in messages %}
-            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">{{ msg }}</p>
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">
+              {{ msg }}
+            </p>
           {% endfor %}
         </section>
       {% endif %}
     {% endwith %}
 
-    <!-- Lessons -->
+    {% if session.get("role") == "student" %}
+      <section class="courses-page" style="padding-top: 10px;">
+        <div class="courses-actions" style="justify-content:center;">
+          {% if is_enrolled %}
+            <span class="btn btn-green" style="pointer-events:none; opacity:0.85;">Joined</span>
+          {% else %}
+            <form action="{{ url_for('join_course', course_id=course.id) }}" method="post">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-green">Join Course</button>
+            </form>
+          {% endif %}
+        </div>
+      </section>
+    {% endif %}
+
     <section class="courses-page">
       <h2 class="gradient-text">Lessons</h2>
 
@@ -74,52 +88,53 @@
       </div>
     </section>
 
-<section class="courses-page">
-  <h2 class="gradient-text">Assignments</h2>
+    <section class="courses-page">
+      <h2 class="gradient-text">Assignments</h2>
 
-  {% if is_owner %}
-    <div class="courses-actions">
-      <a href="{{ url_for('assignment_new', course_id=course.id) }}" class="btn btn-green">+ Add Assignment</a>
-    </div>
-  {% endif %}
+      {% if is_owner %}
+        <div class="courses-actions">
+          <a href="{{ url_for('assignment_new', course_id=course.id) }}" class="btn btn-green">+ Add Assignment</a>
+        </div>
+      {% endif %}
 
-  <div class="card-container">
-    {% for a in assignments %}
-      <div class="card course-card">
-        <h3>{{ a.title }}</h3>
-        <p>{{ a.description }}</p>
+      <div class="card-container">
+        {% for a in assignments %}
+          <div class="card course-card">
+            <h3>{{ a.title }}</h3>
+            <p>{{ a.description }}</p>
 
-        {% if a.due_date %}
-          <p><strong>Due:</strong> {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
-        {% endif %}
+            {% if a.due_date %}
+              <p><strong>Due:</strong> {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
+            {% endif %}
 
-        {% if session.get("role") == "student" %}
-          <a href="{{ url_for('submission_new', assignment_id=a.id) }}" class="btn btn-pink">Submit Project</a>
-        {% elif is_owner %}
-          <a href="{{ url_for('assignment_submissions', assignment_id=a.id) }}" class="btn btn-pink">View Submissions</a>
-        {% endif %}
+            {% if session.get("role") == "student" and is_enrolled %}
+              <a href="{{ url_for('submission_new', assignment_id=a.id) }}" class="btn btn-pink">Submit Project</a>
+            {% elif session.get("role") == "student" and not is_enrolled %}
+              <p class="muted">Join this course to submit assignments.</p>
+            {% elif is_owner %}
+              <a href="{{ url_for('assignment_submissions', assignment_id=a.id) }}" class="btn btn-pink">View Submissions</a>
+            {% endif %}
+          </div>
+        {% else %}
+          <p class="empty-state">No assignments yet.</p>
+        {% endfor %}
       </div>
-    {% else %}
-      <p class="empty-state">No assignments yet.</p>
-    {% endfor %}
-  </div>
-</section>
+    </section>
 
-    <!-- Resources -->
     <section class="courses-page">
       <h2 class="gradient-text">Resources</h2>
 
       {% if is_owner %}
         <div class="courses-actions">
           <form action="{{ url_for('resource_upload', course_id=course.id) }}"
-      method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;">
-  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-  <div class="form-group">
-    <label for="file">Upload a file (PDF, image, mp4 — max 5 MB)</label>
-    <input type="file" id="file" name="file" required>
-  </div>
-  <button type="submit" class="btn btn-green">Upload</button>
-</form>
+                method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+              <label for="file">Upload a file (PDF, image, mp4 — max 5 MB)</label>
+              <input type="file" id="file" name="file" required>
+            </div>
+            <button type="submit" class="btn btn-green">Upload</button>
+          </form>
         </div>
       {% endif %}
 
@@ -147,6 +162,7 @@
   <footer class="footer">
     <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
   </footer>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

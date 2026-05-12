@@ -70,3 +70,13 @@ class Resource(db.Model):
     uploaded_by = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class Enrollment(db.Model):
+    __tablename__ = "enrollments"
+    __table_args__ = (
+        db.UniqueConstraint("student_id", "course_id", name="uq_student_course"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    course_id = db.Column(db.Integer, db.ForeignKey("courses.id"), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
