@@ -107,6 +107,7 @@
         <div class="courses-actions">
           <form action="{{ url_for('resource_upload', course_id=course.id) }}"
                 method="post" enctype="multipart/form-data" class="login-form" style="max-width:480px;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
               <label for="file">Upload a file (PDF, image, mp4 — max 5 MB)</label>
               <input type="file" id="file" name="file" required>
