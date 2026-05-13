@@ -7,7 +7,10 @@ from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import db, User, Course, Assignment, Submission
+from database import db, User, Course, Assignment, Submission, Lesson, Resource
+from werkzeug.utils import secure_filename
+from datetime import datetime
+import uuid
 
 load_dotenv()
 
@@ -16,6 +19,8 @@ app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///kidcode.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "dev-key-for-local-only")
+app.config["UPLOAD_FOLDER"] = os.path.join(app.root_path, "static", "uploads", "courses")
+os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 
 db.init_app(app)
 csrf = CSRFProtect(app)
@@ -63,13 +68,18 @@ def courses_page():
 @app.route("/courses/<int:course_id>")
 def course_details(course_id):
     course = Course.query.get_or_404(course_id)
+    lessons = Lesson.query.filter_by(course_id=course.id).order_by(Lesson.order_index.asc()).all()
+    assignments = Assignment.query.filter_by(course_id=course.id).order_by(Assignment.created_at.desc()).all()
+    resources = Resource.query.filter_by(course_id=course.id).order_by(Resource.created_at.desc()).all()
+    is_owner = session.get("user_id") == course.teacher_id
+
     return render_template(
         "course_detail.html",
         course=course,
-        lessons=[],
-        assignments=[],
-        resources=[],
-        is_owner=(session.get("user_id") == course.teacher_id),
+        lessons=lessons,
+        assignments=assignments,
+        resources=resources,
+        is_owner=is_owner,
     )
 
 @app.route("/courses/new", methods=["GET", "POST"])
@@ -108,7 +118,140 @@ def course_new():
         title=title,
         description=description,
     )
+@app.route("/courses/<int:course_id>/lessons/new", methods=["GET", "POST"])
+@teacher_required
+def lesson_new(course_id):
+    course = Course.query.get_or_404(course_id)
 
+    if course.teacher_id != session.get("user_id"):
+        flash("You can only add lessons to your own course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    errors = []
+    title = ""
+    body = ""
+    video_url = ""
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        body = (request.form.get("body") or "").strip()
+        video_url = (request.form.get("video_url") or "").strip()
+
+        if not title:
+            errors.append("Lesson title is required.")
+        if not body:
+            errors.append("Lesson content is required.")
+
+        if not errors:
+            max_order = db.session.query(db.func.max(Lesson.order_index)).filter_by(course_id=course.id).scalar()
+            next_order = 1 if max_order is None else max_order + 1
+
+            lesson = Lesson(
+                course_id=course.id,
+                title=title,
+                body=body,
+                video_url=video_url if video_url else None,
+                order_index=next_order
+            )
+            db.session.add(lesson)
+            db.session.commit()
+            flash("Lesson added successfully.", "success")
+            return redirect(url_for("course_details", course_id=course.id))
+
+    return render_template(
+        "lesson_new.html",
+        course=course,
+        errors=errors,
+        title=title,
+        body=body,
+        video_url=video_url,
+    )
+@app.route("/courses/<int:course_id>/assignments/new", methods=["GET", "POST"])
+@teacher_required
+def assignment_new(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    if course.teacher_id != session.get("user_id"):
+        flash("You can only add assignments to your own course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    errors = []
+    title = ""
+    description = ""
+    due_date = ""
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        description = (request.form.get("description") or "").strip()
+        due_date = (request.form.get("due_date") or "").strip()
+
+        parsed_due_date = None
+
+        if not title:
+            errors.append("Assignment title is required.")
+        if not description:
+            errors.append("Assignment description is required.")
+
+        if due_date:
+            try:
+                parsed_due_date = datetime.strptime(due_date, "%Y-%m-%dT%H:%M")
+            except ValueError:
+                errors.append("Invalid due date format.")
+
+        if not errors:
+            assignment = Assignment(
+                course_id=course.id,
+                title=title,
+                description=description,
+                due_date=parsed_due_date
+            )
+            db.session.add(assignment)
+            db.session.commit()
+            flash("Assignment added successfully.", "success")
+            return redirect(url_for("course_details", course_id=course.id))
+
+    return render_template(
+        "assignment_new.html",
+        course=course,
+        errors=errors,
+        title=title,
+        description=description,
+        due_date=due_date,
+    )
+
+@app.route("/courses/<int:course_id>/resources/upload", methods=["POST"])
+@teacher_required
+def resource_upload(course_id):
+    course = Course.query.get_or_404(course_id)
+
+    if course.teacher_id != session.get("user_id"):
+        flash("You can only upload resources to your own course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    file = request.files.get("file")
+
+    if not file or file.filename == "":
+        flash("Please choose a file to upload.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    original_filename = secure_filename(file.filename)
+    ext = os.path.splitext(original_filename)[1].lower()
+    stored_name = f"{uuid.uuid4().hex}{ext}"
+    save_path = os.path.join(app.config["UPLOAD_FOLDER"], stored_name)
+
+    file.save(save_path)
+
+    resource = Resource(
+        course_id=course.id,
+        filename=stored_name,
+        original_filename=original_filename,
+        uploaded_by=session["user_id"]
+    )
+    db.session.add(resource)
+    db.session.commit()
+
+    flash("Resource uploaded successfully.", "success")
+    return redirect(url_for("course_details", course_id=course.id))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
