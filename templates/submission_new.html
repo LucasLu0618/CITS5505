@@ -3,13 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create Course - KidCode Hub</title>
+  <title>Submit Project - KidCode Hub</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <!-- Navigation Bar -->
   <header class="navbar">
     <div class="logo">
       <a href="/">KidCode Hub</a>
@@ -33,8 +32,12 @@
   <main class="login-page">
     <section class="login-section">
       <div class="login-card">
-        <h1 class="gradient-text">Create a Course</h1>
-        <p class="login-subtitle">Add a new course to KidCode Hub.</p>
+        <h1 class="gradient-text">
+          {% if existing %}Update Submission{% else %}Submit Project{% endif %}
+        </h1>
+        <p class="login-subtitle">
+          Assignment: {{ assignment.title }}
+        </p>
 
         {% if errors %}
           {% for err in errors %}
@@ -42,25 +45,21 @@
           {% endfor %}
         {% endif %}
 
-        <form class="login-form" action="{{ url_for('course_new') }}" method="post"
-        data-confirm
-      data-confirm-message="Are you sure you want to create this course?">
+        <form class="login-form" action="{{ url_for('submission_new', assignment_id=assignment.id) }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-          <div class="form-group">
-            <label for="title">Course Title</label>
-            <input type="text" id="title" name="title" value="{{ title }}" placeholder="e.g. Python for Beginners" required>
-          </div>
 
           <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="5" placeholder="What will students learn in this course?" required>{{ description }}</textarea>
+            <label for="content">Project Submission</label>
+            <textarea id="content" name="content" rows="8" placeholder="Describe your project or paste your submission details here..." required>{{ content or (existing.content if existing else '') }}</textarea>
           </div>
 
-          <button type="submit" class="btn btn-green login-btn">Create Course</button>
+          <button type="submit" class="btn btn-green login-btn">
+            {% if existing %}Update Submission{% else %}Submit Project{% endif %}
+          </button>
         </form>
 
         <p class="register-link">
-          <a href="{{ url_for('courses_page') }}">Cancel</a>
+          <a href="{{ url_for('course_details', course_id=course.id) }}">Back to Course</a>
         </p>
       </div>
     </section>
@@ -69,6 +68,6 @@
   <footer class="footer">
     <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
   </footer>
-<script src="{{ url_for('static', filename='script.js') }}"></script>
+
 </body>
 </html>

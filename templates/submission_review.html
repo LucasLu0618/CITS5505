@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Review Submission - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main class="login-page">
+    <section class="login-section">
+      <div class="login-card">
+        <h1 class="gradient-text">Review Submission</h1>
+        <p class="login-subtitle">
+          Assignment: {{ assignment.title }}
+        </p>
+
+        {% if errors %}
+          {% for err in errors %}
+            <p class="error-message">{{ err }}</p>
+          {% endfor %}
+        {% endif %}
+
+        <div class="profile-card" style="margin-bottom: 24px;">
+          <div class="profile-row">
+            <span class="profile-label">Student ID</span>
+            <span class="profile-value">{{ submission.student_id }}</span>
+          </div>
+          <div class="profile-row">
+            <span class="profile-label">Submission</span>
+            <span class="profile-value">{{ submission.content }}</span>
+          </div>
+        </div>
+
+        <form class="login-form" action="{{ url_for('submission_review', submission_id=submission.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+          <div class="form-group">
+            <label for="score">Score</label>
+            <input type="number" id="score" name="score" min="0" max="100"
+                   value="{{ submission.score if submission.score is not none else '' }}"
+                   placeholder="Enter a score from 0 to 100">
+          </div>
+
+          <div class="form-group">
+            <label for="feedback">Feedback</label>
+            <textarea id="feedback" name="feedback" rows="6"
+                      placeholder="Write feedback for the student...">{{ submission.feedback or '' }}</textarea>
+          </div>
+
+          <div class="form-group checkbox-group">
+            <label class="checkbox-label">
+              <input type="checkbox" name="is_featured" {% if submission.is_featured %}checked{% endif %}>
+              <span>Mark as featured work</span>
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-green login-btn">Save Feedback</button>
+        </form>
+
+        <p class="register-link">
+          <a href="{{ url_for('assignment_submissions', assignment_id=assignment.id) }}">Back to Submissions</a>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>

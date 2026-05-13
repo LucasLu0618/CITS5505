@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Assignment Submissions - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="hero-center">
+        <h1 class="gradient-text">Assignment Submissions</h1>
+        <p class="hero-subtitle">
+          <span>{{ assignment.title }}</span> for <span>{{ course.title }}</span>
+        </p>
+      </div>
+    </section>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <section class="profile-flash-section">
+          {% for category, msg in messages %}
+            <p class="{% if category == 'success' %}success-message{% else %}error-message{% endif %}">{{ msg }}</p>
+          {% endfor %}
+        </section>
+      {% endif %}
+    {% endwith %}
+
+    <section class="courses-page">
+      <h2 class="gradient-text">Student Work</h2>
+
+      <div class="card-container">
+        {% for submission, student in submissions %}
+          <div class="card course-card">
+            <h3>{{ student.username }}</h3>
+            <p>{{ submission.content }}</p>
+            <p class="muted">
+              Submitted:
+              {{ submission.created_at.strftime('%d %b %Y, %H:%M') if submission.created_at else '—' }}
+            </p>
+            <p class="muted">
+              Score: {{ submission.score if submission.score is not none else '—' }}
+            </p>
+            <p class="muted">
+              Feedback: {{ submission.feedback or '—' }}
+            </p>
+            <a href="{{ url_for('submission_review', submission_id=submission.id) }}" class="btn btn-pink">
+              Review Submission
+            </a>
+          </div>
+        {% else %}
+          <p class="empty-state">No submissions yet.</p>
+        {% endfor %}
+      </div>
+
+      <p class="register-link" style="text-align:center; margin-top: 30px;">
+        <a href="{{ url_for('course_details', course_id=course.id) }}">Back to Course</a>
+      </p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>
