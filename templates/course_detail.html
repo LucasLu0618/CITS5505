@@ -48,7 +48,20 @@
         </section>
       {% endif %}
     {% endwith %}
-
+{% if session.get("role") == "student" %}
+  <section class="courses-page" style="padding-top: 10px;">
+    <div class="courses-actions" style="justify-content:center;">
+      {% if is_enrolled %}
+        <span class="btn btn-green" style="pointer-events:none; opacity:0.85;">Joined</span>
+      {% else %}
+        <form action="{{ url_for('join_course', course_id=course.id) }}" method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-green">Join Course</button>
+        </form>
+      {% endif %}
+    </div>
+  </section>
+{% endif %}
     <!-- Lessons -->
     <section class="courses-page">
       <h2 class="gradient-text">Lessons</h2>
@@ -93,8 +106,10 @@
           <p><strong>Due:</strong> {{ a.due_date.strftime('%d %b %Y, %H:%M') }}</p>
         {% endif %}
 
-        {% if session.get("role") == "student" %}
+        {% if session.get("role") == "student" and is_enrolled %}
           <a href="{{ url_for('submission_new', assignment_id=a.id) }}" class="btn btn-pink">Submit Project</a>
+        {% elif session.get("role") == "student" and not is_enrolled %}
+          <p class="muted">Join this course to submit assignments.</p>
         {% elif is_owner %}
           <a href="{{ url_for('assignment_submissions', assignment_id=a.id) }}" class="btn btn-pink">View Submissions</a>
         {% endif %}
