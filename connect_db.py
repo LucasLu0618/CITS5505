@@ -60,6 +60,17 @@ def courses_page():
     courses = Course.query.all()
     return render_template("courses.html", courses=courses)
 
+@app.route("/courses/<int:course_id>")
+def course_details(course_id):
+    course = Course.query.get_or_404(course_id)
+    return render_template(
+        "course_detail.html",
+        course=course,
+        lessons=[],
+        assignments=[],
+        resources=[],
+        is_owner=(session.get("user_id") == course.teacher_id),
+    )
 
 @app.route("/courses/new", methods=["GET", "POST"])
 @teacher_required
@@ -143,6 +154,8 @@ def forgot_password():
             error = "Password must be at least 8 characters long."
         elif new_password != confirm_password:
             error = "Passwords do not match."
+        elif check_password_hash(user.password_hash, new_password):
+            error = "New password must be different from your old password."
         else:
             user.password_hash = generate_password_hash(new_password)
             db.session.commit()
@@ -293,6 +306,8 @@ def profile_edit():
                 errors.append("New password must be at least 8 characters long.")
             if new_password != confirm_password:
                 errors.append("New passwords do not match.")
+            if check_password_hash(user.password_hash, new_password):
+                errors.append("New password must be different from your current password.")
 
         if not errors:
             user.username = username
