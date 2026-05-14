@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ profile_user.username }} - KidCode Hub</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <div class="logo">
+      <a href="/">KidCode Hub</a>
+    </div>
+    <nav>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/courses">Courses</a></li>
+        <li><a href="/showcase">Showcase</a></li>
+        {% if session.get("user_id") %}
+          <li><a href="/profile">Profile</a></li>
+          <li><a href="/logout">Logout</a></li>
+        {% else %}
+          <li><a href="/login">Login</a></li>
+          <li><a href="/register">Register</a></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Profile header -->
+    <section class="hero">
+      <div class="hero-center">
+        <h1 class="gradient-text">{{ profile_user.username }}</h1>
+        <p class="hero-subtitle">
+          Explore <span>{{ profile_user.username }}</span>'s
+          <span>projects</span> and <span>courses</span>.
+        </p>
+      </div>
+    </section>
+
+    <!-- Basic info -->
+    <section class="profile-section">
+      <h2 class="gradient-text">About</h2>
+      <div class="profile-card">
+        <div class="profile-row"><span class="profile-label">Username</span><span class="profile-value">{{ profile_user.username }}</span></div>
+        <div class="profile-row">
+          <span class="profile-label">Role</span>
+          <span class="profile-value role-pill {% if profile_user.role == 'teacher' %}role-teacher{% else %}role-student{% endif %}">
+            {{ profile_user.role|capitalize }}
+          </span>
+        </div>
+        <div class="profile-row"><span class="profile-label">Joined</span><span class="profile-value">{{ profile_user.created_at.strftime('%d %b %Y') if profile_user.created_at else '—' }}</span></div>
+      </div>
+    </section>
+
+    <!-- Projects -->
+    <section class="profile-section">
+      <h2 class="gradient-text">Projects</h2>
+      {% if projects %}
+        <div class="card-container">
+          {% for p in projects %}
+            <div class="card">
+              <h3>{{ p.title }}</h3>
+              <p>{{ p.description }}</p>
+              {% if p.link %}
+                <p class="muted">
+                  <a href="{{ p.link }}" target="_blank" rel="noopener">View project</a>
+                </p>
+              {% endif %}
+              <p class="muted">
+                Added: {{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No projects yet.</p>
+      {% endif %}
+    </section>
+
+    <!-- Courses -->
+    <section class="profile-section">
+      <h2 class="gradient-text">{% if profile_user.role == 'teacher' %}Courses Taught{% else %}Courses{% endif %}</h2>
+      {% if courses %}
+        <div class="card-container">
+          {% for course in courses %}
+            <div class="card">
+              <h3>{{ course.title }}</h3>
+              <p>{{ course.description }}</p>
+              <a href="{{ url_for('course_details', course_id=course.id) }}" class="btn btn-pink">
+                View Course
+              </a>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No courses yet.</p>
+      {% endif %}
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>2026 KidCode Hub. Designed by Lucas, Sagar and Shee.</p>
+  </footer>
+
+</body>
+</html>
