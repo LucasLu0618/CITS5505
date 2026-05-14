@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import db, User, Course, Assignment, Submission, Lesson, Resource
+from database import db, User, Course, Assignment, Submission, Lesson, Resource, Enrollment
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
@@ -398,9 +398,24 @@ def profile():
         .all()
     )
     featured = [s for s in my_submissions if s.is_featured]
-    available_assignments = (
-        Assignment.query.order_by(Assignment.due_date.is_(None), Assignment.due_date.asc()).all()
-    )
+
+    enrollments = Enrollment.query.filter_by(student_id=user.id).all()
+    enrolled_course_ids = [e.course_id for e in enrollments]
+
+    if enrolled_course_ids:
+        enrolled_courses = (
+            Course.query.filter(Course.id.in_(enrolled_course_ids))
+            .order_by(Course.created_at.desc())
+            .all()
+        )
+        available_assignments = (
+            Assignment.query.filter(Assignment.course_id.in_(enrolled_course_ids))
+            .order_by(Assignment.due_date.is_(None), Assignment.due_date.asc())
+            .all()
+        )
+    else:
+        enrolled_courses = []
+        available_assignments = []
 
     return render_template(
         "student_profile.html",
@@ -408,6 +423,7 @@ def profile():
         submissions=my_submissions,
         featured=featured,
         assignments=available_assignments,
+        enrolled_courses=enrolled_courses,
     )
 
 
