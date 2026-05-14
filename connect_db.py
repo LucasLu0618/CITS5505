@@ -72,6 +72,12 @@ def course_details(course_id):
     assignments = Assignment.query.filter_by(course_id=course.id).order_by(Assignment.created_at.desc()).all()
     resources = Resource.query.filter_by(course_id=course.id).order_by(Resource.created_at.desc()).all()
     is_owner = session.get("user_id") == course.teacher_id
+    is_enrolled = False
+    if session.get("role") == "student" and session.get("user_id"):
+        is_enrolled = Enrollment.query.filter_by(
+            student_id=session["user_id"],
+            course_id=course.id
+        ).first() is not None
 
     return render_template(
         "course_detail.html",
@@ -80,6 +86,7 @@ def course_details(course_id):
         assignments=assignments,
         resources=resources,
         is_owner=is_owner,
+        is_enrolled=is_enrolled,
     )
 
 @app.route("/courses/new", methods=["GET", "POST"])
@@ -601,6 +608,34 @@ def submission_review(submission_id):
         course=course,
         errors=errors
     )
+@app.route("/courses/<int:course_id>/join", methods=["POST"])
+@login_required
+def join_course(course_id):
+    user = current_user()
+    course = Course.query.get_or_404(course_id)
+
+    if user.role != "student":
+        flash("Only students can join courses.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    existing = Enrollment.query.filter_by(
+        student_id=user.id,
+        course_id=course.id
+    ).first()
+
+    if existing:
+        flash("You have already joined this course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    enrollment = Enrollment(
+        student_id=user.id,
+        course_id=course.id
+    )
+    db.session.add(enrollment)
+    db.session.commit()
+
+    flash("Successfully joined the course.", "success")
+    return redirect(url_for("course_details", course_id=course.id))
 print(app.url_map)
 
 if __name__ == "__main__":

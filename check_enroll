@@ -1,0 +1,8 @@
+from connect_db import app
+from database import Enrollment, User, Course
+
+with app.app_context():
+    print("Enrollments:")
+    rows = Enrollment.query.all()
+    for e in rows:
+        print(e.id, e.student_id, e.course_id, e.created_at)
