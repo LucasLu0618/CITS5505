@@ -50,9 +50,9 @@ student's public profile.
 
 | UWA ID | Name | GitHub username |
 | ------ | ---- | --------------- |
-| _TODO_ | _TODO_ | _TODO_ |
-| _TODO_ | _TODO_ | _TODO_ |
-| _TODO_ | _TODO_ | _TODO_ |
+| 24527328 | Yiyang Lu | LucasLu0618 |
+|  24281099 | Sagar Ganagi | sagar-ganagi |
+|  24368932 | Shee Wang | XI WANG |
 
 ## How to launch the application
 
@@ -113,20 +113,3 @@ The application needs **Python 3.10 or newer**.
    python testdb.py
    ```
 
-## How to run the tests
-
-> **Placeholder — to be completed before submission.**
->
-> The repository does not yet contain an automated test suite. Once tests have been
-> added, replace this section with the real instructions. The expected setup is:
->
-> 1. Make sure the dependencies are installed (see launch instructions above) along
->    with the test runner, e.g. `pip install pytest`.
-> 2. From the project root, run the test suite:
->
->    ```
->    pytest
->    ```
->
-> Add a short note here describing what the tests cover (e.g. authentication, course
-> enrolment, project CRUD) and any setup the tests need.
