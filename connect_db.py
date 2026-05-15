@@ -7,7 +7,7 @@ from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import or_
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database import db, User, Course, Assignment, Submission, Lesson, Resource, Enrollment
+from database import db, User, Course, Assignment, Submission, Lesson, Resource, Enrollment, Project
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import uuid
@@ -79,6 +79,13 @@ def course_details(course_id):
             course_id=course.id
         ).first() is not None
 
+    enrolled_students = (
+        User.query.join(Enrollment, Enrollment.student_id == User.id)
+        .filter(Enrollment.course_id == course.id)
+        .order_by(User.username.asc())
+        .all()
+    )
+
     return render_template(
         "course_detail.html",
         course=course,
@@ -87,6 +94,7 @@ def course_details(course_id):
         resources=resources,
         is_owner=is_owner,
         is_enrolled=is_enrolled,
+        enrolled_students=enrolled_students,
     )
 
 @app.route("/courses/new", methods=["GET", "POST"])
@@ -360,7 +368,53 @@ def register():
 @app.route("/showcase")
 def showcase():
     featured_submissions = Submission.query.filter_by(is_featured=True).all()
-    return render_template("showcase.html", submissions=featured_submissions)
+    projects = (
+        db.session.query(Project, User)
+        .join(User, Project.student_id == User.id)
+        .order_by(Project.created_at.desc())
+        .all()
+    )
+    return render_template(
+        "showcase.html",
+        submissions=featured_submissions,
+        projects=projects,
+    )
+
+
+@app.route("/users/<int:user_id>")
+def public_profile(user_id):
+    profile_user = User.query.get_or_404(user_id)
+
+    projects = (
+        Project.query.filter_by(student_id=profile_user.id)
+        .order_by(Project.created_at.desc())
+        .all()
+    )
+
+    if profile_user.role == "teacher":
+        courses = (
+            Course.query.filter_by(teacher_id=profile_user.id)
+            .order_by(Course.created_at.desc())
+            .all()
+        )
+    else:
+        enrollments = Enrollment.query.filter_by(student_id=profile_user.id).all()
+        enrolled_course_ids = [e.course_id for e in enrollments]
+        if enrolled_course_ids:
+            courses = (
+                Course.query.filter(Course.id.in_(enrolled_course_ids))
+                .order_by(Course.created_at.desc())
+                .all()
+            )
+        else:
+            courses = []
+
+    return render_template(
+        "public_profile.html",
+        profile_user=profile_user,
+        projects=projects,
+        courses=courses,
+    )
 
 
 @app.route("/profile")
@@ -406,6 +460,12 @@ def profile():
     )
     featured = [s for s in my_submissions if s.is_featured]
 
+    projects = (
+        Project.query.filter_by(student_id=user.id)
+        .order_by(Project.created_at.desc())
+        .all()
+    )
+
     enrollments = Enrollment.query.filter_by(student_id=user.id).all()
     enrolled_course_ids = [e.course_id for e in enrollments]
 
@@ -431,6 +491,7 @@ def profile():
         featured=featured,
         assignments=available_assignments,
         enrolled_courses=enrolled_courses,
+        projects=projects,
     )
 
 
@@ -488,6 +549,127 @@ def profile_edit():
     return render_template("profile_edit.html", user=user, errors=errors)
 
 
+@app.route("/projects/new", methods=["GET", "POST"])
+@login_required
+def project_new():
+    user = current_user()
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    if user.role != "student":
+        flash("Only students can add projects.", "error")
+        return redirect(url_for("profile"))
+
+    errors = []
+    title = ""
+    description = ""
+    link = ""
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        description = (request.form.get("description") or "").strip()
+        link = (request.form.get("link") or "").strip()
+
+        if not title:
+            errors.append("Project title is required.")
+        elif len(title) > 120:
+            errors.append("Title must be 120 characters or fewer.")
+        if not description:
+            errors.append("Project description is required.")
+        if link and len(link) > 255:
+            errors.append("Link must be 255 characters or fewer.")
+
+        if not errors:
+            project = Project(
+                student_id=user.id,
+                title=title,
+                description=description,
+                link=link if link else None,
+            )
+            db.session.add(project)
+            db.session.commit()
+            flash("Project added successfully.", "success")
+            return redirect(url_for("profile"))
+
+    return render_template(
+        "project_new.html",
+        errors=errors,
+        title=title,
+        description=description,
+        link=link,
+    )
+
+
+@app.route("/projects/<int:project_id>/edit", methods=["GET", "POST"])
+@login_required
+def project_edit(project_id):
+    user = current_user()
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    project = Project.query.get_or_404(project_id)
+
+    if project.student_id != user.id:
+        flash("You can only edit your own projects.", "error")
+        return redirect(url_for("profile"))
+
+    errors = []
+    title = project.title
+    description = project.description
+    link = project.link or ""
+
+    if request.method == "POST":
+        title = (request.form.get("title") or "").strip()
+        description = (request.form.get("description") or "").strip()
+        link = (request.form.get("link") or "").strip()
+
+        if not title:
+            errors.append("Project title is required.")
+        elif len(title) > 120:
+            errors.append("Title must be 120 characters or fewer.")
+        if not description:
+            errors.append("Project description is required.")
+        if link and len(link) > 255:
+            errors.append("Link must be 255 characters or fewer.")
+
+        if not errors:
+            project.title = title
+            project.description = description
+            project.link = link if link else None
+            db.session.commit()
+            flash("Project updated successfully.", "success")
+            return redirect(url_for("profile"))
+
+    return render_template(
+        "project_edit.html",
+        project=project,
+        errors=errors,
+        title=title,
+        description=description,
+        link=link,
+    )
+
+
+@app.route("/projects/<int:project_id>/delete", methods=["POST"])
+@login_required
+def project_delete(project_id):
+    user = current_user()
+    if user is None:
+        session.clear()
+        return redirect(url_for("login"))
+
+    project = Project.query.get_or_404(project_id)
+
+    if project.student_id != user.id:
+        flash("You can only delete your own projects.", "error")
+        return redirect(url_for("profile"))
+
+    db.session.delete(project)
+    db.session.commit()
+    flash("Project deleted.", "success")
+    return redirect(url_for("profile"))
 
 
 @app.route("/assignments/<int:assignment_id>/submit", methods=["GET", "POST"])
@@ -636,6 +818,34 @@ def join_course(course_id):
 
     flash("Successfully joined the course.", "success")
     return redirect(url_for("course_details", course_id=course.id))
+
+
+@app.route("/courses/<int:course_id>/leave", methods=["POST"])
+@login_required
+def leave_course(course_id):
+    user = current_user()
+    course = Course.query.get_or_404(course_id)
+
+    if user.role != "student":
+        flash("Only students can leave courses.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    enrollment = Enrollment.query.filter_by(
+        student_id=user.id,
+        course_id=course.id
+    ).first()
+
+    if not enrollment:
+        flash("You are not enrolled in this course.", "error")
+        return redirect(url_for("course_details", course_id=course.id))
+
+    db.session.delete(enrollment)
+    db.session.commit()
+
+    flash("You have left the course.", "success")
+    return redirect(url_for("course_details", course_id=course.id))
+
+
 print(app.url_map)
 
 if __name__ == "__main__":

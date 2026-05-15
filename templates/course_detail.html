@@ -53,6 +53,11 @@
     <div class="courses-actions" style="justify-content:center;">
       {% if is_enrolled %}
         <span class="btn btn-green" style="pointer-events:none; opacity:0.85;">Joined</span>
+        <form action="{{ url_for('leave_course', course_id=course.id) }}" method="post"
+              data-confirm data-confirm-message="Are you sure you want to leave this course?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="btn btn-pink">Leave Course</button>
+        </form>
       {% else %}
         <form action="{{ url_for('join_course', course_id=course.id) }}" method="post">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -153,6 +158,27 @@
         {% endfor %}
       </div>
     </section>
+
+    <!-- Enrolled Students -->
+    {% if is_owner or is_enrolled %}
+    <section class="courses-page">
+      <h2 class="gradient-text">Enrolled Students</h2>
+      {% if enrolled_students %}
+        <div class="card-container">
+          {% for student in enrolled_students %}
+            <div class="card course-card">
+              <h3>{{ student.username }}</h3>
+              <p>
+                <a href="{{ url_for('public_profile', user_id=student.id) }}" class="btn btn-pink">View Profile</a>
+              </p>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="empty-state">No students enrolled yet.</p>
+      {% endif %}
+    </section>
+    {% endif %}
 
     <p style="text-align:center; margin: 1rem 0 3rem;">
       <a href="{{ url_for('courses_page') }}">&larr; Back to all courses</a>
