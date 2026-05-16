@@ -113,3 +113,52 @@ The application needs **Python 3.10 or newer**.
    python testdb.py
    ```
 
+## How to run the tests
+
+The test suite lives in the `tests/` folder and has two parts:
+
+- **Unit tests** (`test_auth.py`, `test_courses.py`, `test_projects.py`) — 25 tests
+  that exercise the Flask app through its built-in test client. They cover
+  registration and login, role-based access control, course creation, joining and
+  leaving courses, and the full create/edit/delete lifecycle of student projects.
+  They are fast and need no browser.
+- **Selenium tests** (`test_selenium.py`) — 7 tests that drive a real headless
+  Chrome browser against a live copy of the server. `tests/conftest.py` starts the
+  Flask app on a background thread (the `live_server` fixture) so these tests hit a
+  genuinely running server, just as a real user would. They cover the home page,
+  registration, valid and invalid login, adding a project, navigating to the
+  showcase, and logging out.
+
+Every test runs against a throwaway in-memory SQLite database that is created fresh
+before each test and dropped afterwards, so the tests never touch the real
+`instance/kidcode.db` file.
+
+1. **Install the dependencies** (the testing tools are already in
+   `requirements.txt`):
+
+   ```
+   pip install -r requirements.txt
+   ```
+
+   The Selenium tests also need **Google Chrome** (or Chromium) installed on the
+   machine. Selenium downloads a matching driver automatically — no extra setup
+   needed.
+
+2. **Run the whole suite**
+
+   ```
+   pytest
+   ```
+
+3. **Run just the fast unit tests** (no browser required)
+
+   ```
+   pytest tests/test_auth.py tests/test_courses.py tests/test_projects.py
+   ```
+
+4. **Run just the Selenium tests**
+
+   ```
+   pytest tests/test_selenium.py
+   ```
+
